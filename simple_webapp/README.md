@@ -1,23 +1,23 @@
 # Einfache Webanwendung
 
-## Start
+## Start (lokaler PostgreSQL-Server)
 
 ```bash
 cd simple_webapp
-pip install flask psycopg[binary]
-set DATABASE_URL=postgresql://appuser:DeinStarkesPasswort@localhost:5432/appdb
+pip install flask flask-sqlalchemy psycopg[binary]
+set DATABASE_URL=postgresql+psycopg://appuser:3215@localhost:5432/Local_Postgres_Hacking_Python_PW_3215
 python app.py
 ```
 
 Dann im Browser: `http://127.0.0.1:5000`
 
-## PostgreSQL statt SQLite
+## Datenbank
 
-Die Anwendung verwendet jetzt PostgreSQL über `psycopg`.
+Die Anwendung nutzt jetzt **Flask-SQLAlchemy** (im Stil `db = SQLAlchemy(app)`) und ist auf deinen lokalen PostgreSQL-Betrieb ausgelegt.
 
-- Standardmäßig nutzt die App die Umgebungsvariable `DATABASE_URL`.
-- Falls `DATABASE_URL` nicht gesetzt ist, wird als Fallback diese lokale URL verwendet:
-  `postgresql://appuser:DeinStarkesPasswort@localhost:5432/appdb`
+- Standard (falls `DATABASE_URL` nicht gesetzt):
+  `postgresql+psycopg://appuser:3215@localhost:5432/Local_Postgres_Hacking_Python_PW_3215`
+- Empfohlen: `DATABASE_URL` explizit setzen (siehe Start-Block oben).
 
 ## Enthaltene Seiten
 

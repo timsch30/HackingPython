@@ -1,17 +1,22 @@
 from __future__ import annotations
 
 import os
+from typing import Any
 
-import psycopg
-from psycopg.rows import dict_row
-from flask import Flask, abort, g, redirect, render_template, request, url_for
+from flask import Flask, abort, redirect, render_template, request, url_for
+from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import text
 
-DATABASE_URL = os.getenv(
-    "DATABASE_URL",
-    "postgresql://appuser:DeinStarkesPasswort@localhost:5432/appdb",
+DEFAULT_DATABASE_URL = (
+    "postgresql+psycopg://appuser:3215@localhost:5432/Local_Postgres_Hacking_Python_PW_3215"
 )
 
 app = Flask(__name__)
+app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL", DEFAULT_DATABASE_URL)
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+# SQLAlchemy wird als Flask-Erweiterung genutzt (wie im gewünschten Stil).
+db = SQLAlchemy(app)
 
 
 @app.context_processor
@@ -19,23 +24,9 @@ def inject_cookie() -> dict[str, str | None]:
     return {"cookie": request.cookies.get("name")}
 
 
-def get_db() -> psycopg.Connection:
-    if "db" not in g:
-        g.db = psycopg.connect(DATABASE_URL, row_factory=dict_row)
-    return g.db
-
-
-@app.teardown_appcontext
-def close_db(exc: Exception | None) -> None:
-    db = g.pop("db", None)
-    if db is not None:
-        db.close()
-
-
 def init_db() -> None:
-    db = get_db()
-    with db.cursor() as cur:
-        cur.execute(
+    db.session.execute(
+        text(
             """
             CREATE TABLE IF NOT EXISTS users (
                 id BIGSERIAL PRIMARY KEY,
@@ -45,7 +36,9 @@ def init_db() -> None:
             )
             """
         )
-        cur.execute(
+    )
+    db.session.execute(
+        text(
             """
             CREATE TABLE IF NOT EXISTS contents (
                 id BIGSERIAL PRIMARY KEY,
@@ -54,7 +47,8 @@ def init_db() -> None:
             )
             """
         )
-    db.commit()
+    )
+    db.session.commit()
 
 
 def require_login() -> str:
@@ -62,9 +56,14 @@ def require_login() -> str:
     if not username:
         abort(401)
 
-    with get_db().cursor() as cur:
-        cur.execute("SELECT id FROM users WHERE username = %s", (username,))
-        user = cur.fetchone()
+    user = (
+        db.session.execute(
+            text("SELECT id FROM users WHERE username = :username"),
+            {"username": username},
+        )
+        .mappings()
+        .first()
+    )
     if user is None:
         abort(401)
 
@@ -89,19 +88,23 @@ def register() -> str:
         elif len(password) < 3:
             error = "Passwort muss mindestens 3 Zeichen lang sein."
         else:
-            db = get_db()
-            with db.cursor() as cur:
-                cur.execute("SELECT id FROM users WHERE username = %s", (username,))
-                existing = cur.fetchone()
-                if existing is not None:
-                    error = "Username existiert bereits."
-                else:
-                    cur.execute(
-                        "INSERT INTO users (username, password) VALUES (%s, %s)",
-                        (username, password),
-                    )
-                    db.commit()
-                    return redirect(url_for("login"))
+            existing = (
+                db.session.execute(
+                    text("SELECT id FROM users WHERE username = :username"),
+                    {"username": username},
+                )
+                .mappings()
+                .first()
+            )
+            if existing is not None:
+                error = "Username existiert bereits."
+            else:
+                db.session.execute(
+                    text("INSERT INTO users (username, password) VALUES (:username, :password)"),
+                    {"username": username, "password": password},
+                )
+                db.session.commit()
+                return redirect(url_for("login"))
 
     return render_template("register.html", error=error)
 
@@ -114,12 +117,16 @@ def login() -> str:
         username = (request.form.get("username") or "").strip()
         password = request.form.get("password") or ""
 
-        with get_db().cursor() as cur:
-            cur.execute(
-                "SELECT id FROM users WHERE username = %s AND password = %s",
-                (username, password),
+        user = (
+            db.session.execute(
+                text(
+                    "SELECT id FROM users WHERE username = :username AND password = :password"
+                ),
+                {"username": username, "password": password},
             )
-            user = cur.fetchone()
+            .mappings()
+            .first()
+        )
 
         if user is None:
             error = "Login fehlgeschlagen."
@@ -134,23 +141,32 @@ def login() -> str:
 @app.route("/content")
 def content() -> str:
     username = require_login()
-    with get_db().cursor() as cur:
-        cur.execute(
-            "SELECT id, body FROM contents WHERE char_length(body) >= 1024 ORDER BY id DESC"
+    rows: list[dict[str, Any]] = (
+        db.session.execute(
+            text(
+                "SELECT id, body FROM contents WHERE char_length(body) >= 1024 ORDER BY id DESC"
+            )
         )
-        rows = cur.fetchall()
+        .mappings()
+        .all()
+    )
     return render_template("content.html", username=username, contents=rows)
 
 
 @app.route("/detail/<int:content_id>")
 def detail(content_id: int) -> str:
     require_login()
-    with get_db().cursor() as cur:
-        cur.execute(
-            "SELECT id, body FROM contents WHERE id = %s AND char_length(body) >= 1024",
-            (content_id,),
+    row = (
+        db.session.execute(
+            text(
+                "SELECT id, body FROM contents WHERE id = :content_id AND char_length(body) >= 1024"
+            ),
+            {"content_id": content_id},
         )
-        row = cur.fetchone()
+        .mappings()
+        .first()
+    )
+
     if row is None:
         abort(404)
     return render_template("detail.html", content=row)
@@ -162,14 +178,15 @@ def create() -> str:
     error = None
 
     if request.method == "POST":
-        text = (request.form.get("text") or "").strip()
-        if len(text) < 1024:
+        text_value = (request.form.get("text") or "").strip()
+        if len(text_value) < 1024:
             error = "Text muss mindestens 1024 Zeichen enthalten."
         else:
-            db = get_db()
-            with db.cursor() as cur:
-                cur.execute("INSERT INTO contents (body) VALUES (%s)", (text,))
-            db.commit()
+            db.session.execute(
+                text("INSERT INTO contents (body) VALUES (:body)"),
+                {"body": text_value},
+            )
+            db.session.commit()
             return redirect(url_for("content"))
 
     return render_template("create.html", error=error)
