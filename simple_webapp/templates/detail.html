@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
-<h1>Detailseite (Eintrag {{ content['id'] }})</h1>
-<p>Zeichen aus DB: {{ content['body']|length }} (mindestens 1024)</p>
+<h1>Detailseite für Eintrag {{ content['id'] }}</h1>
+<p>Länge: {{ content['body']|length }} Zeichen</p>
 <pre style="white-space: pre-wrap;">{{ content['body'] }}</pre>
 {% endblock %}
