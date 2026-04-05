@@ -8,7 +8,7 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import text
 
 DEFAULT_DATABASE_URL = (
-    "postgresql+psycopg://appuser:3215@localhost:5432/Local_Postgres_Hacking_Python_PW_3215"
+    "postgresql+psycopg://postgres:3215@localhost:5432/postgres"
 )
 
 app = Flask(__name__)
