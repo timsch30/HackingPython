@@ -1,0 +1,78 @@
+# online datenbank
+# lima-city.de
+
+# go into sql shell
+sudo mysql -u root -p
+
+# database aufmachen
+create database bugdb;
+
+# show database;
+show databases;
+
+# verwende database
+use bugdb;
+
+# create table mit namen bugitems
+create table bugitems (id INT NOT NULL auto_increment, primary key (id));
+alter table bugitems add column priority INT not null;
+alter table bugitems add column username VARCHAR(30) not null;
+alter table bugitems add column title VARCHAR(64) not null;
+alter table bugitems add column description VARCHAR(128) not null;
+
+# create table mit namen bugusers
+create table bugusers(id int not null auto_increment, primary key(id));
+alter table bugusers add column username varchar(30) not null;
+alter table bugusers add column email_address varchar(50) not null;
+alter table bugusers add column password varchar(60) not null;
+
+
+# make entries unique, see ticketusers above
+ALTER TABLE bugusers ADD UNIQUE (username);
+ALTER TABLE bugusers ADD UNIQUE (email_address);
+
+
+
+
+# show tables of current database
+show tables;
+
+# drop tables bugusers
+drop tables bugusers;
+
+# get details of table
+describe bugitems;
+
+#insert into bugitems table
+INSERT INTO bugitems (id, priority, username, title, description) VALUES (1, 2, 'Luke', 'GUI Problem', 'GUI really not working');
+INSERT INTO bugitems (id, priority, username, title, description) VALUES (2, 2, 'Nat', 'Backend Problem', 'Backend not starting');
+INSERT INTO bugitems (id, priority, username, title, description) VALUES (3, 3, 'Anakin', 'Totally Broke', 'Nothing works out');
+
+#insert into ticketusers table
+INSERT INTO bugusers (id, username, email_address, password) VALUES (1, 'Derk', 'de@alb.de', 'pass');
+INSERT INTO bugusers (id, username, email_address, password) VALUES (2, 'Natalie', 'na@alb.de', 'pass');
+INSERT INTO bugusers (id, username, email_address, password) VALUES (3, 'Anaking', 'an@alb.de', 'pass');
+
+#check content of table
+select * from bugitems;
+select * from bugusers;
+
+# set password policy
+SET GLOBAL validate_password_policy=LOW;
+# create users
+CREATE USER 'buguser'@'%' IDENTIFIED WITH mysql_native_password BY 'Heute0000';
+# grant full privileges
+GRANT CREATE, ALTER, DROP, INSERT, UPDATE, DELETE, SELECT, REFERENCES, RELOAD on *.* TO 'buguser'@'%' WITH GRANT OPTION;
+# grant partial privileges
+GRANT INSERT, SELECT, DELETE, DROP, UPDATE on bugdb.* TO 'buguser'@'%';
+
+#filter item from table content
+select * from bugitems where username='Luke';
+
+#show grants
+show grants for 'buguser'@'%';
+
+#remove grants
+revoke all on *.* from 'buguser'@'%';
+
+

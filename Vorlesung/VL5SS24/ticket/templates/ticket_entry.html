@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block title %}
+Login Page
+{% endblock %}
+
+{% block content %}
+<body class="text-center">
+<div class="container">
+<form method="POST" class="form-register" action="/ticket_entry" style="color:black">
+
+    <br>
+    <img class="mb-4" src="static/satellit.png" alt="" style="width:200px;">
+    <br>
+    <h1 class="h3 mb-3 font-weight-normal">
+        Please Enter New Ticket
+    </h1>
+
+    <label for="Priority" class="form-label">Priority</label>
+    <select class="form-select" id="Priority" name="Priority" aria-label="Default select example">
+        <option selected>Select a Priority</option>
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+    </select>
+    <label for="Username" class="form-label">Username</label>
+    <input type="text" id="Username" name="Username" class="form-control">
+    <label for="Title" class="form-label">Title</label>
+    <input type="text" id="Title" name="Title" class="form-control">
+    <label for="Description" class="form-label">Description</label>
+    <textarea class="form-control" id="Description" name="Description" rows="3"></textarea>
+
+    <br>
+    <button type="submit" class="btn btn-dark">Enter</button>
+
+</form>
+</div>
+</body>
+
+{% endblock %}

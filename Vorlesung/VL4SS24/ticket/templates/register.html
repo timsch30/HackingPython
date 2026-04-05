@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% block title %}
+Register Page
+{% endblock %}
+
+{% block content %}
+<body class="text-center">
+<div class="container">
+<form method="POST" class="form-register" action="/register" style="color:black">
+
+    <br>
+    <img class="mb-4" src="static/satellit.png" alt="" style="width:200px;">
+    <br>
+    <h1 class="h3 mb-3 font-weight-normal">
+        Please Register
+    </h1>
+
+    <label for="Username" class="form-label">Username</label>
+    <input type="text" id="Username" name="Username" class="form-control">
+    <label for="Email" class="form-label">Email</label>
+    <input type="text" id="Email" name="Email" class="form-control">
+    <label for="Password1" class="form-label">Password</label>
+    <input type="password" id="Password1"  name="Password1" class="form-control" aria-describedby="passwordHelpBlock">
+    <label for="Password2" class="form-label">Confirm Password</label>
+    <input type="password" id="Password2"  name="Password2" class="form-control" aria-describedby="passwordHelpBlock">
+
+    <br>
+    <button type="submit" class="btn btn-dark">Register</button>
+
+</form>
+</div>
+</body>
+
+{% endblock %}
