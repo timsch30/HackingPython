@@ -1,12 +1,15 @@
 from __future__ import annotations
 
-import sqlite3
-from pathlib import Path
+import os
 
+import psycopg
+from psycopg.rows import dict_row
 from flask import Flask, abort, g, redirect, render_template, request, url_for
 
-BASE_DIR = Path(__file__).resolve().parent
-DB_PATH = BASE_DIR / "app.db"
+DATABASE_URL = os.getenv(
+    "DATABASE_URL",
+    "postgresql://appuser:DeinStarkesPasswort@localhost:5432/appdb",
+)
 
 app = Flask(__name__)
 
@@ -16,10 +19,9 @@ def inject_cookie() -> dict[str, str | None]:
     return {"cookie": request.cookies.get("name")}
 
 
-def get_db() -> sqlite3.Connection:
+def get_db() -> psycopg.Connection:
     if "db" not in g:
-        g.db = sqlite3.connect(DB_PATH)
-        g.db.row_factory = sqlite3.Row
+        g.db = psycopg.connect(DATABASE_URL, row_factory=dict_row)
     return g.db
 
 
@@ -32,23 +34,26 @@ def close_db(exc: Exception | None) -> None:
 
 def init_db() -> None:
     db = get_db()
-    db.execute(
-        """
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT NOT NULL UNIQUE,
-            password TEXT NOT NULL
+    with db.cursor() as cur:
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS users (
+                id BIGSERIAL PRIMARY KEY,
+                username VARCHAR(150) NOT NULL UNIQUE,
+                password TEXT NOT NULL,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            )
+            """
         )
-        """
-    )
-    db.execute(
-        """
-        CREATE TABLE IF NOT EXISTS contents (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            body TEXT NOT NULL
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS contents (
+                id BIGSERIAL PRIMARY KEY,
+                body TEXT NOT NULL,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            )
+            """
         )
-        """
-    )
     db.commit()
 
 
@@ -57,7 +62,9 @@ def require_login() -> str:
     if not username:
         abort(401)
 
-    user = get_db().execute("SELECT id FROM users WHERE username = ?", (username,)).fetchone()
+    with get_db().cursor() as cur:
+        cur.execute("SELECT id FROM users WHERE username = %s", (username,))
+        user = cur.fetchone()
     if user is None:
         abort(401)
 
@@ -83,16 +90,18 @@ def register() -> str:
             error = "Passwort muss mindestens 3 Zeichen lang sein."
         else:
             db = get_db()
-            existing = db.execute("SELECT id FROM users WHERE username = ?", (username,)).fetchone()
-            if existing is not None:
-                error = "Username existiert bereits."
-            else:
-                db.execute(
-                    "INSERT INTO users (username, password) VALUES (?, ?)",
-                    (username, password),
-                )
-                db.commit()
-                return redirect(url_for("login"))
+            with db.cursor() as cur:
+                cur.execute("SELECT id FROM users WHERE username = %s", (username,))
+                existing = cur.fetchone()
+                if existing is not None:
+                    error = "Username existiert bereits."
+                else:
+                    cur.execute(
+                        "INSERT INTO users (username, password) VALUES (%s, %s)",
+                        (username, password),
+                    )
+                    db.commit()
+                    return redirect(url_for("login"))
 
     return render_template("register.html", error=error)
 
@@ -105,10 +114,12 @@ def login() -> str:
         username = (request.form.get("username") or "").strip()
         password = request.form.get("password") or ""
 
-        user = get_db().execute(
-            "SELECT id FROM users WHERE username = ? AND password = ?",
-            (username, password),
-        ).fetchone()
+        with get_db().cursor() as cur:
+            cur.execute(
+                "SELECT id FROM users WHERE username = %s AND password = %s",
+                (username, password),
+            )
+            user = cur.fetchone()
 
         if user is None:
             error = "Login fehlgeschlagen."
@@ -123,19 +134,23 @@ def login() -> str:
 @app.route("/content")
 def content() -> str:
     username = require_login()
-    rows = get_db().execute(
-        "SELECT id, body FROM contents WHERE length(body) >= 1024 ORDER BY id DESC"
-    ).fetchall()
+    with get_db().cursor() as cur:
+        cur.execute(
+            "SELECT id, body FROM contents WHERE char_length(body) >= 1024 ORDER BY id DESC"
+        )
+        rows = cur.fetchall()
     return render_template("content.html", username=username, contents=rows)
 
 
 @app.route("/detail/<int:content_id>")
 def detail(content_id: int) -> str:
     require_login()
-    row = get_db().execute(
-        "SELECT id, body FROM contents WHERE id = ? AND length(body) >= 1024",
-        (content_id,),
-    ).fetchone()
+    with get_db().cursor() as cur:
+        cur.execute(
+            "SELECT id, body FROM contents WHERE id = %s AND char_length(body) >= 1024",
+            (content_id,),
+        )
+        row = cur.fetchone()
     if row is None:
         abort(404)
     return render_template("detail.html", content=row)
@@ -152,7 +167,8 @@ def create() -> str:
             error = "Text muss mindestens 1024 Zeichen enthalten."
         else:
             db = get_db()
-            db.execute("INSERT INTO contents (body) VALUES (?)", (text,))
+            with db.cursor() as cur:
+                cur.execute("INSERT INTO contents (body) VALUES (%s)", (text,))
             db.commit()
             return redirect(url_for("content"))
 

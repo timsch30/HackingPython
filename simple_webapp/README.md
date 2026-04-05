@@ -4,10 +4,20 @@
 
 ```bash
 cd simple_webapp
+pip install flask psycopg[binary]
+set DATABASE_URL=postgresql://appuser:DeinStarkesPasswort@localhost:5432/appdb
 python app.py
 ```
 
 Dann im Browser: `http://127.0.0.1:5000`
+
+## PostgreSQL statt SQLite
+
+Die Anwendung verwendet jetzt PostgreSQL über `psycopg`.
+
+- Standardmäßig nutzt die App die Umgebungsvariable `DATABASE_URL`.
+- Falls `DATABASE_URL` nicht gesetzt ist, wird als Fallback diese lokale URL verwendet:
+  `postgresql://appuser:DeinStarkesPasswort@localhost:5432/appdb`
 
 ## Enthaltene Seiten
 
@@ -18,5 +28,3 @@ Dann im Browser: `http://127.0.0.1:5000`
 - `/detail/<id>` Detailseite mit Text aus Datenbank
 - `/create` Formular zum Erstellen neuer Inhalte (mind. 1024 Zeichen)
 - `/logout` Logout und Cookie-Löschung
-
-Die Daten werden in `app.db` (SQLite) gespeichert.
