@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Startseite</h1>
+<p>Willkommen. Bitte wähle einen Einstieg:</p>
+<ul>
+  <li><a href="{{ url_for('login') }}">Login</a></li>
+  <li><a href="{{ url_for('register') }}">Registrierung</a></li>
+</ul>
+{% endblock %}

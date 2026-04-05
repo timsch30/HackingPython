@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Einfache Web App</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 2rem; }
+    nav a { margin-right: 1rem; }
+    textarea { width: 100%; max-width: 900px; }
+    .error { color: #b00020; }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="{{ url_for('entry') }}">Start</a>
+    <a href="{{ url_for('content') }}">Content</a>
+    <a href="{{ url_for('create') }}">Neu</a>
+    <a href="{{ url_for('logout') }}">Logout</a>
+  </nav>
+  <hr>
+  {% block content %}{% endblock %}
+</body>
+</html>
