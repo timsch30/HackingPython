@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Entry Page</h1>
+<p>Willkommen. Bitte wählen Sie Login oder Register.</p>
+<div class="d-flex gap-2">
+  <a class="btn btn-primary" href="{{ url_for('login') }}">Login</a>
+  <a class="btn btn-outline-primary" href="{{ url_for('register') }}">Register</a>
+</div>
+{% endblock %}

@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>New Item Page</h1>
+<p>Text muss mindestens 1024 Zeichen lang sein.</p>
+{% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
+<form method="post">
+  <textarea class="form-control" name="text" rows="16" required></textarea>
+  <button class="btn btn-success mt-3" type="submit">Speichern</button>
+</form>
+{% endblock %}

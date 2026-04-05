@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Allgemeiner Content</h1>
+<p>Hallo {{ username }}. Diese Seite ist nur nach Login sichtbar.</p>
+
+<h2>Inhalte aus Datenbank</h2>
+{% if contents %}
+  <ul>
+    {% for item in contents %}
+      <li>
+        Eintrag {{ item['id'] }}
+        <a href="{{ url_for('detail', content_id=item['id']) }}">Details</a>
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <p>Noch keine Inhalte vorhanden.</p>
+{% endif %}
+{% endblock %}
