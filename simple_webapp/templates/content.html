@@ -1,19 +1,20 @@
 {% extends "base.html" %}
+{% block title %}Content{% endblock %}
 {% block content %}
-<h1>Geschützter Inhalt</h1>
+<h1 class="h3">Geschützter Inhalt</h1>
 <p>Hallo {{ username }}. Diese Seite ist nur nach Login sichtbar.</p>
 
-<h2>Vorhandene Inhalte</h2>
+<h2 class="h5 mt-4">Vorhandene Inhalte (>= 1024 Zeichen)</h2>
 {% if contents %}
-  <ul>
+  <div class="list-group">
     {% for item in contents %}
-      <li>
-        Eintrag {{ item['id'] }} -
-        <a href="{{ url_for('detail', content_id=item['id']) }}">Detail öffnen</a>
-      </li>
+      <a class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" href="{{ url_for('detail', content_id=item['id']) }}">
+        <span>Eintrag {{ item['id'] }}</span>
+        <span class="badge text-bg-dark">Details</span>
+      </a>
     {% endfor %}
-  </ul>
+  </div>
 {% else %}
-  <p>Noch keine Inhalte vorhanden.</p>
+  <div class="alert alert-secondary">Noch keine Inhalte vorhanden.</div>
 {% endif %}
 {% endblock %}

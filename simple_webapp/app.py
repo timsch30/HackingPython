@@ -1,8 +1,5 @@
 from __future__ import annotations
 
-import hashlib
-import hmac
-import os
 import sqlite3
 from pathlib import Path
 
@@ -12,7 +9,11 @@ BASE_DIR = Path(__file__).resolve().parent
 DB_PATH = BASE_DIR / "app.db"
 
 app = Flask(__name__)
-app.config["SECRET_KEY"] = os.environ.get("APP_SECRET", "dev-secret-change-me")
+
+
+@app.context_processor
+def inject_cookie() -> dict[str, str | None]:
+    return {"cookie": request.cookies.get("name")}
 
 
 def get_db() -> sqlite3.Connection:
@@ -36,7 +37,7 @@ def init_db() -> None:
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT NOT NULL UNIQUE,
-            password_hash TEXT NOT NULL
+            password TEXT NOT NULL
         )
         """
     )
@@ -51,42 +52,15 @@ def init_db() -> None:
     db.commit()
 
 
-def hash_password(password: str) -> str:
-    return hashlib.sha256(password.encode("utf-8")).hexdigest()
-
-
-def sign_username(username: str) -> str:
-    signature = hmac.new(
-        app.config["SECRET_KEY"].encode("utf-8"),
-        username.encode("utf-8"),
-        hashlib.sha256,
-    ).hexdigest()
-    return f"{username}|{signature}"
-
-
-def verify_auth_cookie(value: str | None) -> str | None:
-    if not value or "|" not in value:
-        return None
-
-    username, signature = value.split("|", 1)
-    expected = hmac.new(
-        app.config["SECRET_KEY"].encode("utf-8"),
-        username.encode("utf-8"),
-        hashlib.sha256,
-    ).hexdigest()
-    if not hmac.compare_digest(signature, expected):
-        return None
+def require_login() -> str:
+    username = request.cookies.get("name")
+    if not username:
+        abort(401)
 
     user = get_db().execute("SELECT id FROM users WHERE username = ?", (username,)).fetchone()
     if user is None:
-        return None
-    return username
-
-
-def require_login() -> str:
-    username = verify_auth_cookie(request.cookies.get("auth"))
-    if username is None:
         abort(401)
+
     return username
 
 
@@ -114,8 +88,8 @@ def register() -> str:
                 error = "Username existiert bereits."
             else:
                 db.execute(
-                    "INSERT INTO users (username, password_hash) VALUES (?, ?)",
-                    (username, hash_password(password)),
+                    "INSERT INTO users (username, password) VALUES (?, ?)",
+                    (username, password),
                 )
                 db.commit()
                 return redirect(url_for("login"))
@@ -132,14 +106,15 @@ def login() -> str:
         password = request.form.get("password") or ""
 
         user = get_db().execute(
-            "SELECT password_hash FROM users WHERE username = ?", (username,)
+            "SELECT id FROM users WHERE username = ? AND password = ?",
+            (username, password),
         ).fetchone()
 
-        if user is None or user["password_hash"] != hash_password(password):
+        if user is None:
             error = "Login fehlgeschlagen."
         else:
             response = redirect(url_for("content"))
-            response.set_cookie("auth", sign_username(username), httponly=True, samesite="Lax")
+            response.set_cookie("name", username)
             return response
 
     return render_template("login.html", error=error)
@@ -148,14 +123,19 @@ def login() -> str:
 @app.route("/content")
 def content() -> str:
     username = require_login()
-    rows = get_db().execute("SELECT id, body FROM contents ORDER BY id DESC").fetchall()
+    rows = get_db().execute(
+        "SELECT id, body FROM contents WHERE length(body) >= 1024 ORDER BY id DESC"
+    ).fetchall()
     return render_template("content.html", username=username, contents=rows)
 
 
 @app.route("/detail/<int:content_id>")
 def detail(content_id: int) -> str:
     require_login()
-    row = get_db().execute("SELECT id, body FROM contents WHERE id = ?", (content_id,)).fetchone()
+    row = get_db().execute(
+        "SELECT id, body FROM contents WHERE id = ? AND length(body) >= 1024",
+        (content_id,),
+    ).fetchone()
     if row is None:
         abort(404)
     return render_template("detail.html", content=row)
@@ -182,7 +162,7 @@ def create() -> str:
 @app.route("/logout")
 def logout() -> str:
     response = redirect(url_for("entry"))
-    response.set_cookie("auth", "", expires=0)
+    response.set_cookie("name", "", expires=0)
     return response
 
 

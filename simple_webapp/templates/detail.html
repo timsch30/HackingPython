@@ -1,6 +1,11 @@
 {% extends "base.html" %}
+{% block title %}Detail{% endblock %}
 {% block content %}
-<h1>Detailseite für Eintrag {{ content['id'] }}</h1>
-<p>Länge: {{ content['body']|length }} Zeichen</p>
-<pre style="white-space: pre-wrap;">{{ content['body'] }}</pre>
+<h1 class="h3">Detailseite für Eintrag {{ content['id'] }}</h1>
+<p><strong>Länge:</strong> {{ content['body']|length }} Zeichen</p>
+<div class="card">
+  <div class="card-body">
+    <p style="white-space: pre-wrap;" class="mb-0">{{ content['body'] }}</p>
+  </div>
+</div>
 {% endblock %}

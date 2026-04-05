@@ -1,9 +1,10 @@
 {% extends "base.html" %}
+{% block title %}Entry{% endblock %}
 {% block content %}
-<h1>Startseite</h1>
-<p>Willkommen. Bitte wähle einen Einstieg:</p>
-<ul>
-  <li><a href="{{ url_for('login') }}">Login</a></li>
-  <li><a href="{{ url_for('register') }}">Registrierung</a></li>
-</ul>
+<div class="p-4 bg-light rounded-3">
+  <h1 class="mb-3">Entry Page</h1>
+  <p>Willkommen. Bitte zuerst einloggen oder registrieren.</p>
+  <a class="btn btn-dark me-2" href="{{ url_for('login') }}">Login</a>
+  <a class="btn btn-outline-dark" href="{{ url_for('register') }}">Register</a>
+</div>
 {% endblock %}
