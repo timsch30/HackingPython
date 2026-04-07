@@ -82,11 +82,14 @@ def register() -> str:
     if request.method == "POST":
         username = (request.form.get("username") or "").strip()
         password = request.form.get("password") or ""
+        password_confirm = request.form.get("password_confirm") or ""
 
         if len(username) < 3:
             error = "Username muss mindestens 3 Zeichen lang sein."
         elif len(password) < 3:
             error = "Passwort muss mindestens 3 Zeichen lang sein."
+        elif password != password_confirm:
+            error = "Passwörter stimmen nicht überein."
         else:
             existing = (
                 db.session.execute(
