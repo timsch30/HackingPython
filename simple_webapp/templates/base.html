@@ -25,6 +25,11 @@
               <li class="nav-item"><a class="nav-link" href="{{ url_for('register') }}">Register</a></li>
             {% endif %}
           </ul>
+          {% if cookie %}
+            <span class="navbar-text text-white ms-lg-auto mt-2 mt-lg-0">
+              Eingeloggt als: <strong>{{ cookie }}</strong>
+            </span>
+          {% endif %}
         </div>
       </div>
     </nav>
