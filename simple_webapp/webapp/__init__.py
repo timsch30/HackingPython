@@ -15,4 +15,4 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db = SQLAlchemy(app)
 
-from webapp import routes  # noqa: E402,F401
+from . import routes  # noqa: E402,F401

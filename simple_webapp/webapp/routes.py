@@ -5,7 +5,7 @@ from typing import Any
 from flask import abort, redirect, render_template, request, url_for
 from sqlalchemy import text
 
-from webapp import app, db
+from . import app, db
 
 
 @app.context_processor
