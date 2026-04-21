@@ -120,16 +120,13 @@ def login() -> str:
         username = (request.form.get("username") or "").strip()
         password = request.form.get("password") or ""
 
-        user = (
-            db.session.execute(
-                text(
-                    "SELECT id FROM users WHERE username = :username AND password = :password"
-                ),
-                {"username": username, "password": password},
-            )
-            .mappings()
-            .first()
+        # UNSAFE (absichtlich für Übungszwecke):
+        # Dieser String verknüpft Benutzereingaben direkt in SQL und ist
+        # dadurch anfällig für SQL-Injection.
+        unsafe_query = (
+            f"SELECT id FROM users WHERE username = '{username}' AND password = '{password}'"
         )
+        user = db.session.execute(text(unsafe_query)).mappings().first()
 
         if user is None:
             error = "Login fehlgeschlagen."
