@@ -15,7 +15,7 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
           <ul class="navbar-nav">
-            {% if cookie %}
+            {% if current_user %}
               <li class="nav-item"><a class="nav-link" href="{{ url_for('content') }}">Content</a></li>
               <li class="nav-item"><a class="nav-link" href="{{ url_for('create') }}">New Item</a></li>
               <li class="nav-item"><a class="nav-link" href="{{ url_for('logout') }}">Logout</a></li>
@@ -25,9 +25,9 @@
               <li class="nav-item"><a class="nav-link" href="{{ url_for('register') }}">Register</a></li>
             {% endif %}
           </ul>
-          {% if cookie %}
+          {% if current_user %}
             <span class="navbar-text text-white ms-lg-auto mt-2 mt-lg-0">
-              Eingeloggt als: <strong>{{ cookie }}</strong>
+              Eingeloggt als: <strong>{{ current_user }}</strong>
             </span>
           {% endif %}
         </div>
