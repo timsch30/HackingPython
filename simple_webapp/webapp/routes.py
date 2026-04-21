@@ -156,8 +156,7 @@ def create() -> str:
             error = "Text darf nicht leer sein."
         else:
             db.session.execute(
-                text("INSERT INTO contents (body) VALUES (:body)"),
-                {"body": text_value},
+                text(f"INSERT INTO contents (body) VALUES ('{text_value}')")
             )
             db.session.commit()
             return redirect(url_for("content"))

@@ -54,3 +54,11 @@ Die Login-Query in `app.py` ist absichtlich **unsicher** aufgebaut (String-Konka
 - Login nutzt ein frei setzbares Cookie `name` für die Identität. Empfohlen: serverseitige Session mit signiertem Session-Cookie.
 
 > Hinweis: Diese Übungsanwendung ist absichtlich unsicher und sollte nur lokal bzw. in isolierten Trainingsumgebungen verwendet werden.
+
+### Für Aufgabe 2
+- username: egal
+- passwort: ' OR '1'='1' --
+
+SQL sieht dann so aus:
+(username='hacker' AND password='') OR TRUE
+-> Immer True
