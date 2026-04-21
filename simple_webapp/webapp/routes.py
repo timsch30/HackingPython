@@ -9,8 +9,8 @@ from . import app, db
 
 
 @app.context_processor
-def inject_cookie() -> dict[str, str | None]:
-    return {"cookie": request.cookies.get("name")}
+def inject_current_user() -> dict[str, str | None]:
+    return {"current_user": get_logged_in_username()}
 
 
 def init_db() -> None:
@@ -37,11 +37,43 @@ def init_db() -> None:
             """
         )
     )
+    db.session.execute(
+        text(
+            """
+            CREATE TABLE IF NOT EXISTS auth_state (
+                id BIGINT PRIMARY KEY,
+                username VARCHAR(150)
+            )
+            """
+        )
+    )
+    db.session.execute(
+        text(
+            """
+            INSERT INTO auth_state (id, username)
+            VALUES (1, NULL)
+            ON CONFLICT (id) DO NOTHING
+            """
+        )
+    )
     db.session.commit()
 
 
+def get_logged_in_username() -> str | None:
+    row = (
+        db.session.execute(
+            text("SELECT username FROM auth_state WHERE id = 1")
+        )
+        .mappings()
+        .first()
+    )
+    if row is None:
+        return None
+    return row["username"]
+
+
 def require_login() -> str:
-    username = request.cookies.get("name")
+    username = get_logged_in_username()
     if not username:
         abort(401)
     return username
@@ -108,9 +140,11 @@ def login() -> str:
         if user is None:
             error = "Login fehlgeschlagen."
         else:
-            response = redirect(url_for("content"))
-            response.set_cookie("name", username)
-            return response
+            db.session.execute(
+                text(f"UPDATE auth_state SET username = '{username}' WHERE id = 1")
+            )
+            db.session.commit()
+            return redirect(url_for("content"))
 
     return render_template("login.html", error=error)
 
@@ -166,9 +200,9 @@ def create() -> str:
 
 @app.route("/logout")
 def logout() -> str:
-    response = redirect(url_for("entry"))
-    response.set_cookie("name", "", expires=0)
-    return response
+    db.session.execute(text("UPDATE auth_state SET username = NULL WHERE id = 1"))
+    db.session.commit()
+    return redirect(url_for("entry"))
 
 
 @app.errorhandler(401)
