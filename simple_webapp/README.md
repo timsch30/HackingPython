@@ -19,6 +19,12 @@ Die Anwendung nutzt jetzt **Flask-SQLAlchemy** (im Stil `db = SQLAlchemy(app)`) 
   `postgresql+psycopg://appuser:3215@localhost:5432/Local_Postgres_Hacking_Python_PW_3215`
 - Empfohlen: `DATABASE_URL` explizit setzen (siehe Start-Block oben).
 
+## Projektstruktur (wie im Vorlesungsstil)
+
+- `app.py` als schlanker Starter
+- `webapp/__init__.py` für Flask-App + SQLAlchemy Setup
+- `webapp/routes.py` für die Routen/Views
+
 ## Enthaltene Seiten
 
 - `/` Startseite mit Links zu Login und Registrierung
@@ -26,14 +32,14 @@ Die Anwendung nutzt jetzt **Flask-SQLAlchemy** (im Stil `db = SQLAlchemy(app)`) 
 - `/login` Login (Cookie-basierte Authentifizierung)
 - `/content` Geschützte Content-Seite
 - `/detail/<id>` Detailseite mit Text aus Datenbank
-- `/create` Formular zum Erstellen neuer Inhalte (mind. 1024 Zeichen)
+- `/create` Formular zum Erstellen neuer Inhalte (nur nicht-leer)
 - `/logout` Logout und Cookie-Löschung
 
 ## SQL-Injection-Check (für eigene Tests)
 
 ### Ergebnis für den aktuellen Stand
 
-Die Login-Query in `app.py` ist absichtlich **unsicher** aufgebaut (String-Konkatenation per f-String) und damit für SQL-Injection-Übungen mit Burp geeignet. Die übrigen Datenbankzugriffe nutzen weiterhin gebundene Parameter.
+Die Login-Query in `app.py` ist absichtlich **unsicher** aufgebaut (String-Konkatenation per f-String) und damit für SQL-Injection-Übungen mit Burp geeignet. Die App ist insgesamt bewusst simpel gehalten, damit du darauf aufbauen kannst.
 
 ### Empfohlene Vorgehensweise für deine Übung
 
@@ -47,4 +53,4 @@ Die Login-Query in `app.py` ist absichtlich **unsicher** aufgebaut (String-Konka
 - Passwörter werden aktuell im Klartext gespeichert. Empfohlen: gehashte Speicherung (z. B. `werkzeug.security.generate_password_hash` / `check_password_hash`).
 - Login nutzt ein frei setzbares Cookie `name` für die Identität. Empfohlen: serverseitige Session mit signiertem Session-Cookie.
 
-> Hinweis: Diese Übungsänderung ist absichtlich unsicher und sollte nur lokal bzw. in isolierten Trainingsumgebungen verwendet werden.
+> Hinweis: Diese Übungsanwendung ist absichtlich unsicher und sollte nur lokal bzw. in isolierten Trainingsumgebungen verwendet werden.
